@@ -10,14 +10,14 @@
  */
 window.PORTFOLIO_CONFIG = {
   studio: {
-    name: 'FlyHigh Misegamae', // Nombre provisional. Cambiar antes de publicar.
-    pageTitle: 'FlyHigh Misegamae · Aplicaciones personales',
+    name: 'Fly High', // Nombre público de la marca.
+    pageTitle: 'Fly High · Aplicaciones personales',
     eyebrow: '',
-    headline: 'FlyHi',
+    headline: 'Fly High',
     accentHeadline: '',
     subtitle: 'Aplicaciones personales',
-    aboutTitle: 'Aplicaciones personales de FlyHigh Misegamae.',
-    aboutText: 'Este es un portfolio de aplicaciones personales de FlyHigh Misegamae. Empezamos por PASfh y añadiremos otras aplicaciones cuando estén listas.'
+    aboutTitle: 'Aplicaciones personales de Fly High.',
+    aboutText: 'Fly High reúne ideas y aplicaciones personales. Empezamos por PASfh y añadiremos otras aplicaciones cuando estén listas.'
   },
   apps: [
     {

@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#111d32" />
-  <meta name="description" content="FlyHigh Misegamae · Aplicaciones personales. Portfolio de aplicaciones personales con PASfh como primer proyecto." />
-  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" id="browser-theme-color" content="#0E1A2B" />
+  <meta name="description" content="Fly High · Aplicaciones personales. Portfolio de aplicaciones personales con PASfh como primer proyecto." />
+  <link rel="icon" href="./assets/favicon-64.png" type="image/png" />
+  <link rel="apple-touch-icon" href="./assets/favicon-192.png" />
   <link rel="stylesheet" href="./assets/styles.css" />
-  <title>FlyHigh Misegamae · Aplicaciones personales</title>
+  <title>Fly High · Aplicaciones personales</title>
   <script src="./scripts/catalogo.js" defer></script>
   <script src="./scripts/app.js" defer></script>
 </head>
@@ -17,9 +18,9 @@
   <header class="menubar" aria-label="Barra superior">
     <div class="menus-left">
       <button class="brand-menu" type="button" data-menu="inicio" aria-label="Menú principal" aria-expanded="false" title="Menú principal">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.9 21.1 8v8L12 21.1 2.9 16V8L12 2.9Z" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <img class="nav-brand-logo" src="./assets/flyhigh-logo.webp" alt="" />
       </button>
-      <span class="brand-name" id="brand-name">FlyHigh Misegamae</span>
+      <span class="brand-name" id="brand-name">Fly High</span>
       <nav class="desktop-menus" aria-label="Menús del escritorio">
         <button class="menubar-item" type="button" data-menu="archivo" aria-expanded="false">Archivo</button>
         <button class="menubar-item" type="button" data-menu="ver" aria-expanded="false">Ver</button>
@@ -27,26 +28,24 @@
         <button class="menubar-item" type="button" data-menu="ayuda" aria-expanded="false">Ayuda</button>
       </nav>
     </div>
-    <div class="menus-right"><span class="live-tag"><span class="live-dot"></span> Portfolio v3</span><time id="clock" aria-label="Hora local"></time></div>
+    <div class="menus-right">
+      <div class="theme-picker" role="group" aria-label="Tema del portfolio">
+        <button class="theme-option" type="button" data-theme-choice="night" aria-pressed="true" title="Azul Noche Elegante">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15.1Z"/></svg><span>Noche</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-choice="dawn" aria-pressed="false" title="Amanecer Radiante">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Amanecer</span>
+        </button>
+      </div>
+      <time id="clock" aria-label="Hora local"></time>
+    </div>
     <div class="menu-popover" id="menu-popover" hidden role="menu"></div>
   </header>
 
   <main class="desktop" id="desktop" aria-label="Escritorio de aplicaciones">
     <div class="desktop-intro brand-hero">
-      <div class="hero-brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
-          <defs>
-            <linearGradient id="flyhiMarkGradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#7db8ff"/>
-              <stop offset="100%" stop-color="#ffffff"/>
-            </linearGradient>
-          </defs>
-          <path d="M11 34c10-9 18-13 28-17 2-.8 4.1 1 3.3 3-3.7 9.2-8 17.3-17.4 27.3-1.7 1.8-4.8 1.2-5.8-1.1l-2.1-5-5.1-2.1c-2.3-.9-3-4-1-5.8Z" fill="url(#flyhiMarkGradient)"/>
-          <path d="M24 38 45 17" stroke="#173256" stroke-width="3.2" stroke-linecap="round"/>
-          <path d="M24 38 20 48" stroke="#173256" stroke-width="3.2" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <h1 id="intro-headline">FlyHi</h1>
+      <div class="hero-brand-mark"><img src="./assets/flyhigh-logo.webp" alt="Emblema de Fly High: pluma en forma de bombilla y destellos" /></div>
+      <h1 id="intro-headline">Fly High</h1>
       <p id="intro-tagline">Aplicaciones personales</p>
     </div>
     <section class="desktop-icons" id="desktop-icons" aria-label="Aplicaciones y accesos directos"></section>

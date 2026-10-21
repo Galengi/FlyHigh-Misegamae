@@ -69,7 +69,7 @@ function renderApp(app) {
 }
 
 function renderAbout() {
-  return `<div class="about-content"><div class="about-mark">${aboutSvg}</div><div class="app-category">Bienvenido al escritorio</div><h2>${esc(studio.aboutTitle || 'Un espacio para crear cosas útiles.')}</h2><p>${esc(studio.aboutText || '')}</p><div class="small-details"><div><strong>Versión del portfolio:</strong> 3.0 (demostración)</div><div><strong>Diseño:</strong> Adaptado a móvil y escritorio</div><div><strong>Publicación:</strong> Catálogo editable sin panel privado</div></div><div class="app-footer"><button type="button" class="primary-btn" data-open="${esc(apps[0]?.id || 'proximamente')}">Explorar ${esc(apps[0]?.name || 'el catálogo')} →</button></div></div>`;
+  return `<div class="about-content"><div class="about-mark">${aboutSvg}</div><div class="app-category">Bienvenido al escritorio</div><h2>${esc(studio.aboutTitle || 'Un espacio para crear cosas útiles.')}</h2><p>${esc(studio.aboutText || '')}</p><div class="small-details"><div><strong>Versión del portfolio:</strong> 4.0 (demostración)</div><div><strong>Diseño:</strong> Adaptado a móvil y escritorio</div><div><strong>Publicación:</strong> Catálogo editable sin panel privado</div></div><div class="app-footer"><button type="button" class="primary-btn" data-open="${esc(apps[0]?.id || 'proximamente')}">Explorar ${esc(apps[0]?.name || 'el catálogo')} →</button></div></div>`;
 }
 function renderSoon() {
   return `<div class="soon-content"><span class="app-category">En preparación</span><h2>Más aplicaciones, próximamente.</h2><p>Este acceso reserva un lugar para futuros proyectos. Todas las nuevas aplicaciones que añadas a <code>scripts/catalogo.js</code> aparecerán automáticamente en el escritorio y en el dock.</p><span class="soon-badge">✳ Espacio reservado para la siguiente app</span></div>`;
@@ -110,24 +110,14 @@ function openWindow(id, { route = true } = {}) {
     windowsState.forEach((win, winId) => { if (winId !== id) { win.remove(); windowsState.delete(winId); } });
   }
   const existing = windowsState.get(id);
-  if (existing) {
-    if (existing.classList.contains('is-minimized')) {
-      bringFront(existing);
-      if (route) setRoute(id);
-    } else {
-      existing.classList.add('is-minimized');
-      syncWindowClasses();
-      if (route) setRoute(null);
-    }
-    return;
-  }
+  if (existing) { bringFront(existing); if (route) setRoute(id); return; }
   const el = document.createElement('section');
   el.className = 'window'; el.dataset.window = id;
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', view.title);
   el.style.setProperty('--w', view.width + 'px');
   el.innerHTML = `<header class="window-titlebar" data-drag-handle><button type="button" class="mobile-back" data-window-action="hide" aria-label="Volver al escritorio"><span aria-hidden="true">‹</span> Inicio</button><span class="window-title">${esc(view.title)}</span><div class="window-controls"><button type="button" class="minimize" data-window-action="minimize" aria-label="Minimizar ventana"><span>—</span></button><button type="button" class="maximize" data-window-action="maximize" aria-label="Maximizar o restaurar ventana"><span>□</span></button><button type="button" class="close" data-window-action="hide" aria-label="Ocultar ventana"><span>✕</span></button></div></header><div class="window-content">${view.html}</div>`;
   windowsHost.appendChild(el); windowsState.set(id, el); bringFront(el); enableDrag(el);
-  el.addEventListener('pointerdown', () => bringFront(el));
+  el.addEventListener('pointerdown', () => { if (!el.classList.contains('is-minimized')) bringFront(el); });
   if (route) setRoute(id);
   // Keyboard users reach the back/close button immediately.
   if (matchMedia('(max-width: 760px)').matches) el.querySelector('.mobile-back').focus({ preventScroll: true });
@@ -196,12 +186,36 @@ function enableDrag(win) {
   handle.addEventListener('pointerup',end); handle.addEventListener('pointercancel',end);
 }
 
+// Themes: dark Azul Noche Elegante and light Amanecer Radiante.
+function setTheme(theme, persist = true) {
+  const active = theme === 'dawn' ? 'dawn' : 'night';
+  document.documentElement.dataset.theme = active;
+  document.documentElement.style.colorScheme = active === 'dawn' ? 'light' : 'dark';
+  document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.themeChoice === active));
+  });
+  const meta = document.getElementById('browser-theme-color');
+  if (meta) meta.content = active === 'dawn' ? '#F7F2E8' : '#0E1A2B';
+  if (persist) { try { localStorage.setItem('flyhigh-theme', active); } catch (_) {} }
+}
+function initTheme() {
+  let stored = null;
+  try { stored = localStorage.getItem('flyhigh-theme'); } catch (_) {}
+  const preference = (stored === 'night' || stored === 'dawn') ? stored :
+    (window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'dawn' : 'night');
+  setTheme(preference, false);
+  document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+    btn.addEventListener('click', () => setTheme(btn.dataset.themeChoice));
+  });
+}
+
 function init() {
+  initTheme();
   document.title = studio.pageTitle || document.title;
-  document.getElementById('brand-name').textContent = studio.name || 'FlyHigh Misegamae';
+  document.getElementById('brand-name').textContent = studio.name || 'Fly High';
   const introHeadline = document.getElementById('intro-headline');
   const introTagline = document.getElementById('intro-tagline');
-  if (introHeadline) introHeadline.textContent = studio.headline || studio.name || 'FlyHi';
+  if (introHeadline) introHeadline.textContent = studio.headline || studio.name || 'Fly High';
   if (introTagline) introTagline.textContent = studio.subtitle || 'Aplicaciones personales';
   renderLaunchers();
   document.addEventListener('click', ev => {
