@@ -1,0 +1,4 @@
+Prototipo propio inspirado en patrones de interacción de escritorios gráficos.
+No incluye código fuente ni elementos gráficos extraídos de FramAra.
+Los iconos y colores son provisionales; el icono de PASfh no debe considerarse el logo oficial hasta reemplazarlo.
+No incluye APK ni capturas reales de PASfh.

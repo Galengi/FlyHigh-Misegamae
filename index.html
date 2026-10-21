@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111d32" />
+  <meta name="description" content="FlyHigh Misegamae · Aplicaciones personales. Portfolio de aplicaciones personales con PASfh como primer proyecto." />
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <title>FlyHigh Misegamae · Aplicaciones personales</title>
+  <script src="./scripts/catalogo.js" defer></script>
+  <script src="./scripts/app.js" defer></script>
+</head>
+<body>
+  <div class="wallpaper" aria-hidden="true"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="terrain terrain-back"></div><div class="terrain terrain-front"></div></div>
+
+  <header class="menubar" aria-label="Barra superior">
+    <div class="menus-left">
+      <button class="brand-menu" type="button" data-menu="inicio" aria-label="Menú principal" aria-expanded="false" title="Menú principal">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.9 21.1 8v8L12 21.1 2.9 16V8L12 2.9Z" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="brand-name" id="brand-name">FlyHigh Misegamae</span>
+      <nav class="desktop-menus" aria-label="Menús del escritorio">
+        <button class="menubar-item" type="button" data-menu="archivo" aria-expanded="false">Archivo</button>
+        <button class="menubar-item" type="button" data-menu="ver" aria-expanded="false">Ver</button>
+        <button class="menubar-item" type="button" data-menu="ventana" aria-expanded="false">Ventana</button>
+        <button class="menubar-item" type="button" data-menu="ayuda" aria-expanded="false">Ayuda</button>
+      </nav>
+    </div>
+    <div class="menus-right"><span class="live-tag"><span class="live-dot"></span> Portfolio v3</span><time id="clock" aria-label="Hora local"></time></div>
+    <div class="menu-popover" id="menu-popover" hidden role="menu"></div>
+  </header>
+
+  <main class="desktop" id="desktop" aria-label="Escritorio de aplicaciones">
+    <div class="desktop-intro brand-hero">
+      <div class="hero-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
+          <defs>
+            <linearGradient id="flyhiMarkGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#7db8ff"/>
+              <stop offset="100%" stop-color="#ffffff"/>
+            </linearGradient>
+          </defs>
+          <path d="M11 34c10-9 18-13 28-17 2-.8 4.1 1 3.3 3-3.7 9.2-8 17.3-17.4 27.3-1.7 1.8-4.8 1.2-5.8-1.1l-2.1-5-5.1-2.1c-2.3-.9-3-4-1-5.8Z" fill="url(#flyhiMarkGradient)"/>
+          <path d="M24 38 45 17" stroke="#173256" stroke-width="3.2" stroke-linecap="round"/>
+          <path d="M24 38 20 48" stroke="#173256" stroke-width="3.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 id="intro-headline">FlyHi</h1>
+      <p id="intro-tagline">Aplicaciones personales</p>
+    </div>
+    <section class="desktop-icons" id="desktop-icons" aria-label="Aplicaciones y accesos directos"></section>
+    <div id="windows" class="windows" aria-live="off"></div>
+  </main>
+
+  <nav class="dock" id="dock" aria-label="Acceso rápido a aplicaciones"></nav>
+  <div class="mobile-home-line" aria-hidden="true"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <noscript>Esta web necesita JavaScript para abrir las fichas de las aplicaciones.</noscript>
+</body>
+</html>
