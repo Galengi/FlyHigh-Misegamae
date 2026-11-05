@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "flyhigh-misegamae",
+  "compatibility_date": "2026-11-05",
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist"
+  },
+  "previews": {}
+}
