@@ -54,75 +54,74 @@ function appIcon(app) {
 }
 
 function renderLaunchers() {
-  const shortcuts = apps.map(app => `<button type="button" class="shortcut" data-open="${esc(app.id)}" aria-label="Abrir ${esc(app.name)}"><span class="app-icon" aria-hidden="true">${appIcon(app)}</span><span class="shortcut-label">${esc(app.name)}</span>${app.status === 'published' ? '' : '<span class="shortcut-status">En desarrollo</span>'}</button>`);
-  shortcuts.push(`<button type="button" class="shortcut" data-open="acerca" aria-label="Abrir Acerca de"><span class="app-icon">${aboutSvg}</span><span class="shortcut-label">Acerca de</span></button>`);
-  shortcuts.push(`<button type="button" class="shortcut" data-open="proximamente" aria-label="Abrir Próximamente"><span class="app-icon">${futureSvg}</span><span class="shortcut-label">Próximamente</span></button>`);
+  const shortcuts = apps.map(app => `<button type="button" class="shortcut" data-open="${esc(app.id)}" aria-label="${esc(t('open'))} ${esc(app.name)}"><span class="app-icon" aria-hidden="true">${appIcon(app)}</span><span class="shortcut-label">${esc(app.name)}</span>${app.status === 'published' ? '' : `<span class="shortcut-status">${esc(t('development'))}</span>`}</button>`);
+  shortcuts.push(`<button type="button" class="shortcut" data-open="acerca" aria-label="${esc(t('open'))} ${esc(t('aboutTitle'))}"><span class="app-icon">${aboutSvg}</span><span class="shortcut-label">${esc(t('aboutTitle'))}</span></button>`);
+  shortcuts.push(`<button type="button" class="shortcut" data-open="proximamente" aria-label="${esc(t('open'))} ${esc(t('futureTitle'))}"><span class="app-icon">${futureSvg}</span><span class="shortcut-label">${esc(t('futureTitle'))}</span></button>`);
   document.getElementById('desktop-icons').innerHTML = shortcuts.join('');
 
-  const dockIcons = apps.map(app => `<button type="button" class="dock-item" data-open="${esc(app.id)}" aria-label="Abrir ${esc(app.name)}" title="${esc(app.name)}"><span class="dock-img dock-generic">${appIcon(app)}</span><i class="dock-dot" aria-hidden="true"></i></button>`);
+  const dockIcons = apps.map(app => `<button type="button" class="dock-item" data-open="${esc(app.id)}" aria-label="${esc(t('open'))} ${esc(app.name)}" title="${esc(app.name)}"><span class="dock-img dock-generic">${appIcon(app)}</span><i class="dock-dot" aria-hidden="true"></i></button>`);
   dockIcons.push('<span class="dock-separator" aria-hidden="true"></span>');
-  dockIcons.push(`<button type="button" class="dock-item" data-open="acerca" aria-label="Abrir Acerca de" title="Acerca de"><span class="dock-img dock-generic">${aboutSvg}</span><i class="dock-dot" aria-hidden="true"></i></button>`);
+  dockIcons.push(`<button type="button" class="dock-item" data-open="acerca" aria-label="${esc(t('open'))} ${esc(t('aboutTitle'))}" title="${esc(t('aboutTitle'))}"><span class="dock-img dock-generic">${aboutSvg}</span><i class="dock-dot" aria-hidden="true"></i></button>`);
   document.getElementById('dock').innerHTML = dockIcons.join('');
 }
 
+function localizedApp(app) {
+  const copy = app.translations?.[globalLanguage];
+  if (!copy) throw new Error(`Missing ${globalLanguage} translation for ${app.id}`);
+  return copy;
+}
+
 function renderApp(app) {
-  const features = (app.features || []).map(f => `<article class="feature-card"><span class="feature-glyph" aria-hidden="true">${esc(f.icon || '✳')}</span><strong>${esc(f.title)}</strong><p>${esc(f.description)}</p></article>`).join('');
+  const copy = localizedApp(app);
+  const labels = key => t(key);
+  const features = (copy.features || []).map(feature => `<article class="feature-card"><span class="feature-glyph" aria-hidden="true">${esc(feature.icon || '✳')}</span><strong>${esc(feature.title)}</strong><p>${esc(feature.description)}</p></article>`).join('');
   const screenshots = (app.screenshots || []).map(img => {
     const src = safeURL(img.src);
-    return src ? `<figure class="screenshot"><img src="${esc(src)}" alt="${esc(img.alt || 'Captura de la aplicación')}" loading="lazy" data-screenshot/><figcaption>${esc(img.alt || '')}</figcaption></figure>` : '';
+    return src ? `<figure class="screenshot"><img src="${esc(src)}" alt="${esc(img.alt || labels('screenshotAlt'))}" loading="lazy" data-screenshot/><figcaption>${esc(img.alt || '')}</figcaption></figure>` : '';
   }).filter(Boolean).join('');
   const links = (app.links || []).map(l => {
     const url = safeURL(l.url);
-    if (!url) return '';
-    return `<a class="primary-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(l.label || 'Abrir enlace')} ↗</a>`;
+    return url ? `<a class="primary-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(l.label || t('open'))} ↗</a>` : '';
   }).filter(Boolean).join('');
   const embeddedPath = safeAppPath(app.embedPath);
   const actions = app.actions || {};
-  const playAction = embeddedPath
-    ? `<button class="primary-btn" type="button" data-start-embedded="${esc(embeddedPath)}">${esc(actions.play?.label || 'Jugar ahora')}</button>`
-    : '';
+  const playAction = embeddedPath ? `<button class="primary-btn" type="button" data-start-embedded="${esc(embeddedPath)}">${esc(copy.actions.play)}</button>` : '';
   const installPath = safePartyPath(actions.install?.url);
-  const installAction = installPath
-    ? `<a class="secondary-btn app-action-link" href="${esc(installPath)}" target="_blank" rel="noopener noreferrer">${esc(actions.install?.label || 'Instalar versión web')} ↗</a>`
-    : '';
+  const installAction = installPath ? `<a class="secondary-btn app-action-link" href="${esc(installPath)}" target="_blank" rel="noopener noreferrer">${esc(copy.actions.install)} ↗</a>` : '';
   const androidUrl = safeURL(actions.android?.url || app.android?.url);
-  const androidAction = androidUrl
-    ? `<a class="secondary-btn app-action-link" href="${esc(androidUrl)}" download>${esc(actions.android?.label || 'Descargar APK Android')}</a>`
-    : `<span class="disabled-pill" aria-disabled="true">⌛ ${esc(actions.android?.pendingLabel || 'APK pendiente de publicación')}</span>`;
+  const androidAction = androidUrl ? `<a class="secondary-btn app-action-link" href="${esc(androidUrl)}" download>${esc(copy.actions.download)}</a>` : `<span class="disabled-pill" aria-disabled="true">⌛ ${esc(copy.actions.pendingApk || labels('downloadUnavailable'))}</span>`;
   const actionRow = `<div class="app-actions">${playAction}${installAction}${androidAction}</div>`;
-  const footerAction = actionRow || links || '<span class="disabled-pill">⌛ Descarga todavía no disponible</span>';
-  const status = app.status === 'published' ? 'Publicada' : 'En desarrollo';
-  const partyDetails = app.id === 'partriv'
-    ? `<div class="party-details"><p><strong>Tres rondas:</strong> Definición, Una palabra y Mímica. Cada ronda cambia la forma de dar pistas y responder.</p><p><strong>Configuración:</strong> conceptos, idiomas, periodos, categorías, cultura, regiones y dificultad, además de los ajustes de sonido, orientación y colores de equipo disponibles en ParTriv.</p><p><strong>Uso:</strong> partida por equipos en PC y smartphone. Tras la primera carga, la PWA conserva los recursos necesarios para continuar sin conexión.</p></div>`
-    : '';
-  const emptyGallery = app.id === 'partriv'
-    ? '<div class="empty-gallery"><span class="empty-gallery-icon" aria-hidden="true">▧</span><h4>Capturas de ParTriv pendientes</h4><p>La galería está preparada para incorporar capturas reales de la pantalla inicial, configuración, partida y resultados. No se muestran imágenes ficticias ni de otra aplicación.</p><div class="small-details"><div><strong>Archivos necesarios:</strong> partriv-home.png, partriv-settings.png, partriv-game.png y partriv-results.png</div></div></div>'
-    : '<div class="empty-gallery"><span class="empty-gallery-icon" aria-hidden="true">▧</span><h4>Capturas pendientes</h4><p>Añadiremos imágenes reales de la aplicación cuando estén disponibles. No mostramos diseños conceptuales como si fueran capturas auténticas.</p></div>';
-  const embedded = '';
-  return `<div class="app-hero"><div class="hero-app-icon">${appIcon(app)}</div><div><div class="app-category">Aplicación · ${esc(app.category || 'Software')}</div><h2>${esc(app.name)}</h2><p>${esc(app.summary)}</p><div class="status-row"><span class="status-pill ${app.status === 'published' ? 'status-published' : ''}">● ${status}</span>${(app.platform || []).map(p => `<span class="platform-pill">${esc(p)}</span>`).join('')}</div></div></div>
-    ${embedded}
-    <div class="app-nav" role="tablist" aria-label="Información de ${esc(app.name)}">
-      <button class="app-tab" type="button" role="tab" aria-selected="true" data-tab="resumen">Descripción</button>
-      <button class="app-tab" type="button" role="tab" aria-selected="false" data-tab="capturas" tabindex="-1">Capturas</button>
-      <button class="app-tab" type="button" role="tab" aria-selected="false" data-tab="publicacion" tabindex="-1">Publicación</button>
+  const footerAction = actionRow || links || `<span class="disabled-pill">⌛ ${esc(labels('downloadUnavailable'))}</span>`;
+  const published = app.status === 'published';
+  const status = published ? t('published') : t('development');
+  const galleryCopy = copy.gallery || { title: t('pendingCaptures'), description: t('addCaptures'), files: '' };
+  const emptyGallery = `<div class="empty-gallery"><span class="empty-gallery-icon" aria-hidden="true">▧</span><h4>${esc(galleryCopy.title)}</h4><p>${esc(galleryCopy.description)}</p>${galleryCopy.files ? `<div class="small-details"><div><strong>${esc(labels('files'))}:</strong> ${esc(galleryCopy.files)}</div></div>` : ''}</div>`;
+  const partyDetails = app.id === 'partriv' ? `<div class="party-details">${(copy.features || []).map(feature => `<p><strong>${esc(feature.title)}:</strong> ${esc(feature.description)}</p>`).join('')}</div>` : '';
+  return `<div class="app-hero"><div class="hero-app-icon">${appIcon(app)}</div><div><div class="app-category">${esc(labels('appLabel'))} · ${esc(copy.category || labels('software'))}</div><h2>${esc(app.name)}</h2><p>${esc(copy.summary)}</p><div class="status-row"><span class="status-pill ${published ? 'status-published' : ''}">● ${esc(status)}</span>${(copy.platform || []).map(platform => `<span class="platform-pill">${esc(platform)}</span>`).join('')}</div></div></div>
+    <div class="app-nav" role="tablist" aria-label="${esc(`${labels('appLabel')}: ${app.name}`)}">
+      <button class="app-tab" type="button" role="tab" aria-selected="true" data-tab="resumen">${esc(t('description'))}</button>
+      <button class="app-tab" type="button" role="tab" aria-selected="false" data-tab="capturas" tabindex="-1">${esc(t('screenshots'))}</button>
+      <button class="app-tab" type="button" role="tab" aria-selected="false" data-tab="publicacion" tabindex="-1">${esc(t('publication'))}</button>
     </div>
-    <section class="tab-pane" data-pane="resumen" role="tabpanel"><h3 class="pane-heading">${esc(app.name)} · ${esc(app.category || 'Aplicación')}</h3><p class="body-copy">${esc(app.description)}</p>${partyDetails}<div class="feature-grid">${features || '<p>Próximamente añadiremos las funciones de esta aplicación.</p>'}</div><div class="app-footer">${footerAction}</div>${app.android?.sizeBytes ? `<div class="download-details"><strong>APK ${esc(app.android.version || '')}</strong> · ${Number(app.android.sizeBytes).toLocaleString(globalLanguage)} bytes · SHA-256 <code>${esc(app.android.sha256 || 'pendiente')}</code></div>` : ''}${app.notice ? `<p class="demo-note">${esc(app.notice)}</p>` : ''}</section>
-    <section class="tab-pane" data-pane="capturas" role="tabpanel" hidden><h3 class="pane-heading">Galería de ${esc(app.name)}</h3>${screenshots ? `<div class="screenshot-grid">${screenshots}</div>` : emptyGallery}</section>
-    <section class="tab-pane" data-pane="publicacion" role="tabpanel" hidden><h3 class="pane-heading">Estado de la publicación</h3><p class="body-copy">${app.status === 'published' ? 'Puedes consultar los enlaces de esta versión a continuación.' : 'La ficha de esta aplicación está disponible, pero todavía no hemos publicado una descarga validada.'}</p><div class="small-details"><div><strong>Estado:</strong> ${status}</div><div><strong>Plataforma:</strong> ${esc((app.platform || []).join(', ') || 'Pendiente')}</div><div><strong>Tecnología:</strong> ${esc(app.technology || 'Sin especificar')}</div><div><strong>Versión:</strong> ${esc(app.version || 'Pendiente')}</div><div><strong>Capturas:</strong> ${(app.screenshots || []).length ? 'Añadidas al catálogo' : 'Pendientes de incorporar'}</div></div><div class="app-footer">${footerAction}</div></section>`;
+    <section class="tab-pane" data-pane="resumen" role="tabpanel"><h3 class="pane-heading">${esc(app.name)} · ${esc(copy.category || labels('software'))}</h3><p class="body-copy">${esc(copy.description)}</p>${partyDetails}<div class="feature-grid">${features || `<p>${esc(labels('noFeatures'))}</p>`}</div><div class="app-footer">${footerAction}</div>${app.android?.sizeBytes ? `<div class="download-details"><strong>${esc(labels('apk'))} ${esc(app.android.version || '')}</strong> · ${Number(app.android.sizeBytes).toLocaleString(globalLanguage)} bytes · SHA-256 <code>${esc(app.android.sha256 || labels('pending'))}</code></div>` : ''}${copy.notice ? `<p class="demo-note">${esc(copy.notice)}</p>` : ''}</section>
+    <section class="tab-pane" data-pane="capturas" role="tabpanel" hidden><h3 class="pane-heading">${esc(galleryCopy.title || t('gallery', app.name))}</h3>${screenshots ? `<div class="screenshot-grid">${screenshots}</div>` : emptyGallery}</section>
+    <section class="tab-pane" data-pane="publicacion" role="tabpanel" hidden><h3 class="pane-heading">${esc(t('appStatus'))}</h3><p class="body-copy">${esc(published ? labels('statusAvailable') : labels('statusPending'))}</p><div class="small-details"><div><strong>${esc(labels('state'))}:</strong> ${esc(status)}</div><div><strong>${esc(t('platform'))}:</strong> ${esc((copy.platform || []).join(', ') || t('pending'))}</div><div><strong>${esc(t('technology'))}:</strong> ${esc(copy.technology || t('pending'))}</div><div><strong>${esc(t('version'))}:</strong> ${esc(app.version || t('pending'))}</div><div><strong>${esc(t('captures'))}:</strong> ${esc((app.screenshots || []).length ? labels('added') : labels('pendingToAdd'))}</div></div><div class="app-footer">${footerAction}</div></section>`;
 }
 
 function renderAbout() {
-  return `<div class="about-content"><div class="about-mark">${aboutSvg}</div><div class="app-category">Bienvenido al escritorio</div><h2>${esc(studio.aboutTitle || 'Un espacio para crear cosas útiles.')}</h2><p>${esc(studio.aboutText || '')}</p><div class="small-details"><div><strong>Versión del portfolio:</strong> 4.0 (demostración)</div><div><strong>Diseño:</strong> Adaptado a móvil y escritorio</div><div><strong>Publicación:</strong> Catálogo editable sin panel privado</div></div><div class="app-footer"><button type="button" class="primary-btn" data-open="${esc(apps[0]?.id || 'proximamente')}">Explorar ${esc(apps[0]?.name || 'el catálogo')} →</button></div></div>`;
+  const copy = studio.translations?.[globalLanguage];
+  if (!copy) throw new Error(`Missing ${globalLanguage} studio translation`);
+  return `<div class="about-content"><div class="about-mark">${aboutSvg}</div><div class="app-category">${esc(t('welcome'))}</div><h2>${esc(copy.aboutTitle)}</h2><p>${esc(copy.aboutText)}</p><div class="small-details"><div><strong>${esc(t('portfolioVersion'))}:</strong> 4.0</div><div><strong>${esc(t('design'))}:</strong> ${esc(t('centered'))}</div><div><strong>${esc(t('catalogPublication'))}:</strong> ${esc(t('aboutPortfolio'))}</div></div><div class="app-footer"><button type="button" class="primary-btn" data-open="${esc(apps[0]?.id || 'proximamente')}">${esc(t('explore'))} ${esc(apps[0]?.name || '')} →</button></div></div>`;
 }
 function renderSoon() {
-  return `<div class="soon-content"><span class="app-category">En preparación</span><h2>Más aplicaciones, próximamente.</h2><p>Este acceso reserva un lugar para futuros proyectos. Todas las nuevas aplicaciones que añadas a <code>scripts/catalogo.js</code> aparecerán automáticamente en el escritorio y en el dock.</p><span class="soon-badge">✳ Espacio reservado para la siguiente app</span></div>`;
+  return `<div class="soon-content"><span class="app-category">${esc(t('preparing'))}</span><h2>${esc(t('futureTitle'))}</h2><p>${esc(t('futureCopy'))}</p><span class="soon-badge">✳ ${esc(t('reserved'))}</span></div>`;
 }
 
 function viewById(id) {
   const app = appMap.get(id);
-  if (app) return { title: `${app.name} · ${app.category || 'Aplicación'}`, width: app.embedPath ? 980 : 680, html: renderApp(app) };
-  if (id === 'acerca') return { title: 'Acerca de este espacio', width: 530, html: renderAbout() };
-  if (id === 'proximamente') return { title: 'Próximamente', width: 490, html: renderSoon() };
+  if (app) { const copy = localizedApp(app); return { title: `${app.name} · ${copy.category}`, width: app.embedPath ? 980 : 680, html: renderApp(app) }; }
+  if (id === 'acerca') return { title: t('aboutTitle'), width: 530, html: renderAbout() };
+  if (id === 'proximamente') return { title: t('futureTitle'), width: 490, html: renderSoon() };
   return null;
 }
 
@@ -138,6 +137,25 @@ function localizeWindowControls(win) {
   if (minimize) { minimize.setAttribute('aria-label', t('minimize')); minimize.querySelector('span').textContent = '−'; }
   if (maximize) { maximize.setAttribute('aria-label', t('restore')); maximize.querySelector('span').textContent = '□'; }
   if (close) { close.setAttribute('aria-label', t('close')); close.querySelector('span').textContent = '×'; }
+}
+
+function refreshWindow(win) {
+  const id = win?.dataset.window;
+  const view = id ? viewById(id) : null;
+  const content = win?.querySelector('.window-content');
+  if (!view || !content) return;
+  const activeTab = content.querySelector('[data-tab][aria-selected="true"]')?.dataset.tab || 'resumen';
+  const scrollTop = content.scrollTop;
+  const embedded = content.querySelector('.embedded-app-shell');
+  if (embedded) embedded.remove();
+  content.innerHTML = view.html;
+  if (embedded) content.appendChild(embedded);
+  win.setAttribute('aria-label', view.title);
+  win.querySelector('.window-title').textContent = view.title;
+  selectTab(win, activeTab);
+  content.scrollTop = scrollTop;
+  localizeWindowControls(win);
+  if (embedded) observePartyLayout(win);
 }
 
 function postBridgeMessage(frame, data) {
@@ -396,6 +414,12 @@ function initTheme() {
 
 function applyLanguage() {
   document.documentElement.lang = globalLanguage;
+  const studioCopy = studio.translations?.[globalLanguage];
+  if (studioCopy) {
+    document.title = `${studio.name || 'Fly High'} · ${studioCopy.subtitle}`;
+    const introTagline = document.getElementById('intro-tagline');
+    if (introTagline) introTagline.textContent = studioCopy.subtitle;
+  }
   const picker = document.getElementById('language-picker');
   if (picker) picker.value = globalLanguage;
   const menuLabels = { archivo:'file', ver:'view', ventana:'window', ayuda:'help' };
@@ -412,9 +436,12 @@ function applyLanguage() {
   document.getElementById('desktop')?.setAttribute('aria-label', t('desktop'));
   document.getElementById('dock')?.setAttribute('aria-label', t('quickAccess'));
   document.querySelectorAll('.shortcut-status').forEach(el => { el.textContent = t('development'); });
-  windowsState.forEach(win => localizeWindowControls(win));
   renderLaunchers();
-  windowsState.forEach(win => { const frame = win.querySelector('.embedded-app-frame'); if (frame) postLanguageToFrame(frame); });
+  windowsState.forEach(win => {
+    refreshWindow(win);
+    const frame = win.querySelector('.embedded-app-frame');
+    if (frame) postLanguageToFrame(frame);
+  });
 }
 
 function setGlobalLanguage(language, persist = true) {
@@ -438,13 +465,14 @@ function init() {
   initTheme();
   initLanguage();
   window.addEventListener('message', handleThemeMessage);
-  document.title = studio.pageTitle || document.title;
+  const studioCopy = studio.translations?.[globalLanguage];
+  document.title = `${studio.name || 'Fly High'} · ${studioCopy?.subtitle || document.title}`;
   const brandLabel = document.querySelector('#brand-name span');
   if (brandLabel) brandLabel.textContent = studio.name || 'Fly High';
   const introHeadline = document.getElementById('intro-headline');
   const introTagline = document.getElementById('intro-tagline');
   if (introHeadline) introHeadline.textContent = studio.headline || studio.name || 'Fly High';
-  if (introTagline) introTagline.textContent = studio.subtitle || 'Aplicaciones personales';
+  if (introTagline) introTagline.textContent = studioCopy?.subtitle || '';
   renderLaunchers();
   document.addEventListener('pointerdown', ev => {
     if (!currentMenu) return;

@@ -7,13 +7,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $flyHighRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$ParTrivPath = if ([string]::IsNullOrWhiteSpace($ParTrivPath)) { Join-Path $flyHighRoot '..' 'ParTriv' } else { $ParTrivPath }
+$ParTrivPath = if ([string]::IsNullOrWhiteSpace($ParTrivPath)) { Join-Path $flyHighRoot '..\ParTriv' } else { $ParTrivPath }
 $OutputPath = if ([string]::IsNullOrWhiteSpace($OutputPath)) { Join-Path $flyHighRoot 'dist' } else { $OutputPath }
 $parTrivRoot = (Resolve-Path $ParTrivPath).Path
-$project = Join-Path $parTrivRoot 'src' 'ParTriv.Web' 'ParTriv.Web.csproj'
-$publishPath = Join-Path $flyHighRoot '.local' 'partriv-publish'
-$stagingPath = Join-Path $flyHighRoot '.local' 'dist-staging'
-$partyPath = Join-Path $stagingPath 'apps' 'party'
+$project = Join-Path $parTrivRoot 'src\ParTriv.Web\ParTriv.Web.csproj'
+$publishPath = Join-Path $flyHighRoot '.local\partriv-publish'
+$stagingPath = Join-Path $flyHighRoot '.local\dist-staging'
+$partyPath = Join-Path $stagingPath 'apps\party'
 
 if (-not (Test-Path $project)) { throw "No se encontró ParTriv.Web: $project" }
 
@@ -67,4 +67,4 @@ if (-not [string]::IsNullOrWhiteSpace($ZipPath)) {
 Remove-Item -LiteralPath $OutputPath -Recurse -Force -ErrorAction SilentlyContinue
 Move-Item -LiteralPath $stagingPath -Destination $OutputPath
 Write-Output "Distribucion local creada en: $OutputPath"
-Write-Output "ParTriv integrado en: $(Join-Path $OutputPath 'apps' 'party')"
+Write-Output "ParTriv integrado en: $(Join-Path $OutputPath 'apps\party')"
