@@ -10,7 +10,7 @@ on:
       partriv_ref:
         description: 'ParTriv commit, tag or release ref'
         required: true
-        default: 'cc0c243'
+        default: 'cc0c2435fa2c7b64888ee696b6fe42269478a611'
         type: string
       deploy:
         description: 'Deploy this manual run to the production Worker'
@@ -47,14 +47,14 @@ jobs:
           repository: Galengi/ParTriv
           token: ${{ secrets.PARTRIV_REPO_READ_TOKEN }}
           path: partriv
-          ref: ${{ inputs.partriv_ref || 'cc0c243' }}
+          ref: ${{ inputs.partriv_ref || 'cc0c2435fa2c7b64888ee696b6fe42269478a611' }}
           fetch-depth: 1
 
       - name: Verify ParTriv reference
         shell: bash
         working-directory: partriv
         env:
-          EXPECTED_REF: ${{ inputs.partriv_ref || 'cc0c243' }}
+          EXPECTED_REF: ${{ inputs.partriv_ref || 'cc0c2435fa2c7b64888ee696b6fe42269478a611' }}
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
