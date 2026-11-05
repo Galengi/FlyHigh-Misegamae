@@ -21,6 +21,7 @@ Remove-Item -LiteralPath $publishPath -Recurse -Force -ErrorAction SilentlyConti
 Remove-Item -LiteralPath $stagingPath -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $publishPath,$partyPath -Force | Out-Null
 
+try {
 Copy-Item -LiteralPath (Join-Path $flyHighRoot 'index.html') -Destination $stagingPath
 Copy-Item -LiteralPath (Join-Path $flyHighRoot 'assets') -Destination $stagingPath -Recurse
 Copy-Item -LiteralPath (Join-Path $flyHighRoot 'scripts') -Destination $stagingPath -Recurse
@@ -68,3 +69,9 @@ Remove-Item -LiteralPath $OutputPath -Recurse -Force -ErrorAction SilentlyContin
 Move-Item -LiteralPath $stagingPath -Destination $OutputPath
 Write-Output "Distribucion local creada en: $OutputPath"
 Write-Output "ParTriv integrado en: $(Join-Path $OutputPath 'apps\party')"
+}
+catch {
+  Remove-Item -LiteralPath $publishPath -Recurse -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $stagingPath -Recurse -Force -ErrorAction SilentlyContinue
+  throw
+}

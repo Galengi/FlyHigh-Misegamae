@@ -131,9 +131,11 @@ function isParty(idOrWindow) {
 }
 
 function localizeWindowControls(win) {
+  const back = win.querySelector('.mobile-back');
   const minimize = win.querySelector('.minimize');
   const maximize = win.querySelector('.maximize');
   const close = win.querySelector('.close');
+  if (back) back.setAttribute('aria-label', t('backDesktop'));
   if (minimize) { minimize.setAttribute('aria-label', t('minimize')); minimize.querySelector('span').textContent = '−'; }
   if (maximize) { maximize.setAttribute('aria-label', t('restore')); maximize.querySelector('span').textContent = '□'; }
   if (close) { close.setAttribute('aria-label', t('close')); close.querySelector('span').textContent = '×'; }
@@ -195,11 +197,18 @@ function openScreenshot(image) {
   overlay.className = 'screenshot-lightbox';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
-  overlay.innerHTML = `<button type="button" class="lightbox-close" aria-label="Cerrar captura">×</button><img src="${esc(image.currentSrc || image.src)}" alt="${esc(image.alt || 'Captura ampliada')}"/>`;
+  overlay.innerHTML = `<button type="button" class="lightbox-close" aria-label="${esc(t('closeScreenshot'))}">×</button><img src="${esc(image.currentSrc || image.src)}" alt="${esc(image.alt || t('enlargedScreenshot'))}"/>`;
   const close = () => overlay.remove();
   overlay.addEventListener('click', ev => { if (ev.target === overlay || ev.target.closest('.lightbox-close')) close(); });
   document.body.appendChild(overlay);
   overlay.querySelector('.lightbox-close')?.focus();
+}
+function localizeLightbox() {
+  const lightbox = document.querySelector('.screenshot-lightbox');
+  if (!lightbox) return;
+  lightbox.querySelector('.lightbox-close')?.setAttribute('aria-label', t('closeScreenshot'));
+  const image = lightbox.querySelector('img');
+  if (image && !image.dataset.sourceAlt) image.alt = t('enlargedScreenshot');
 }
 function themeMessage(theme) { return { type: THEME_MESSAGE_TYPE, version: THEME_VERSION, theme: theme === 'dawn' ? 'light' : 'dark' }; }
 function postThemeToFrame(frame, theme = document.documentElement.dataset.theme) {
@@ -291,7 +300,7 @@ function openWindow(id, { route = true } = {}) {
   el.className = `window${isParty(id) ? ' party-window' : ''}`; el.dataset.window = id;
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', view.title);
   el.style.setProperty('--w', view.width + 'px');
-  el.innerHTML = `<header class="window-titlebar" data-drag-handle><button type="button" class="mobile-back" data-window-action="hide" aria-label="Volver al escritorio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="window-title">${esc(view.title)}</span><div class="window-controls"><button type="button" class="minimize" data-window-action="minimize" aria-label="Minimizar ventana"><span>—</span></button><button type="button" class="maximize" data-window-action="maximize" aria-label="Maximizar o restaurar ventana"><span>□</span></button><button type="button" class="close" data-window-action="close" aria-label="Cerrar ventana"><span>×</span></button></div></header><div class="window-content">${view.html}</div>`;
+  el.innerHTML = `<header class="window-titlebar" data-drag-handle><button type="button" class="mobile-back" data-window-action="hide" aria-label="${esc(t('backDesktop'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="window-title">${esc(view.title)}</span><div class="window-controls"><button type="button" class="minimize" data-window-action="minimize" aria-label="${esc(t('minimize'))}"><span>—</span></button><button type="button" class="maximize" data-window-action="maximize" aria-label="${esc(t('restore'))}"><span>□</span></button><button type="button" class="close" data-window-action="close" aria-label="${esc(t('close'))}"><span>×</span></button></div></header><div class="window-content">${view.html}</div>`;
   windowsHost.appendChild(el); windowsState.set(id, el); bringFront(el); enableDrag(el);
   localizeWindowControls(el);
   registerEmbeddedFrame(el.querySelector('.embedded-app-frame'));
@@ -316,7 +325,7 @@ function startEmbeddedParty(win) {
     shell.className = 'embedded-app-shell';
     frame = document.createElement('iframe');
     frame.className = 'embedded-app-frame';
-    frame.title = 'ParTriv';
+    frame.title = t('iframeTitle');
     frame.loading = 'eager';
     frame.src = safeAppPath(appMap.get('partriv')?.embedPath) || './apps/party/';
     shell.appendChild(frame);
@@ -334,7 +343,7 @@ function selectTab(win, id) {
   win.querySelector('.window-content')?.scrollTo({top:0,behavior:'instant'});
 }
 function topWindow() { return [...windowsState.values()].filter(w => !w.classList.contains('is-minimized')).sort((a,b) => +b.style.zIndex - +a.style.zIndex)[0]; }
-function centerWindows() { windowsState.forEach(w => { w.style.removeProperty('left'); w.style.removeProperty('top'); }); toast('Ventanas centradas'); }
+function centerWindows() { windowsState.forEach(w => { w.style.removeProperty('left'); w.style.removeProperty('top'); }); toast(t('centered')); }
 function showDesktop() { windowsState.forEach(w => w.classList.add('is-minimized')); syncWindowClasses(); setRoute(null); }
 
 function getMenuItems(id) {
@@ -417,11 +426,21 @@ function applyLanguage() {
   const studioCopy = studio.translations?.[globalLanguage];
   if (studioCopy) {
     document.title = `${studio.name || 'Fly High'} · ${studioCopy.subtitle}`;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t('metaDescription'));
     const introTagline = document.getElementById('intro-tagline');
     if (introTagline) introTagline.textContent = studioCopy.subtitle;
   }
   const picker = document.getElementById('language-picker');
   if (picker) picker.value = globalLanguage;
+  document.querySelector('.menubar')?.setAttribute('aria-label', t('topBar'));
+  document.querySelector('.desktop-menus')?.setAttribute('aria-label', t('desktopMenus'));
+  picker?.setAttribute('aria-label', t('globalLanguage'));
+  document.querySelector('.theme-picker')?.setAttribute('aria-label', t('themeLabel'));
+  document.querySelector('.theme-option[data-theme-choice="night"]')?.setAttribute('title', t('nightTitle'));
+  document.querySelector('.theme-option[data-theme-choice="dawn"]')?.setAttribute('title', t('dawnTitle'));
+  document.getElementById('clock')?.setAttribute('aria-label', t('localTime'));
+  document.querySelector('.hero-brand-mark img')?.setAttribute('alt', t('logoAlt'));
+  document.querySelector('noscript')?.replaceChildren(document.createTextNode(t('noScript')));
   const menuLabels = { archivo:'file', ver:'view', ventana:'window', ayuda:'help' };
   document.querySelectorAll('[data-menu]').forEach(button => {
     const key = menuLabels[button.dataset.menu];
@@ -436,12 +455,19 @@ function applyLanguage() {
   document.getElementById('desktop')?.setAttribute('aria-label', t('desktop'));
   document.getElementById('dock')?.setAttribute('aria-label', t('quickAccess'));
   document.querySelectorAll('.shortcut-status').forEach(el => { el.textContent = t('development'); });
+  const openMenuId = currentMenu;
+  if (openMenuId) closeMenu();
   renderLaunchers();
   windowsState.forEach(win => {
     refreshWindow(win);
     const frame = win.querySelector('.embedded-app-frame');
     if (frame) postLanguageToFrame(frame);
   });
+  if (openMenuId) {
+    const menuButton = document.querySelector(`[data-menu="${openMenuId}"]`);
+    if (menuButton) toggleMenu(menuButton);
+  }
+  localizeLightbox();
 }
 
 function setGlobalLanguage(language, persist = true) {

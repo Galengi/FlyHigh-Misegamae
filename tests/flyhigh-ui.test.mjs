@@ -32,7 +32,8 @@ test('el regreso móvil usa un botón accesible con SVG y mantiene la minimizaci
   const app = read('scripts/app.js');
   assert.match(app, /class="mobile-back"[^>]*data-window-action="hide"/);
   assert.match(app, /class="mobile-back"[\s\S]*?<svg/);
-  assert.match(app, /class="mobile-back"[\s\S]*?aria-label="Volver al escritorio"/);
+  assert.match(app, /class="mobile-back"[\s\S]*?aria-label="\$\{esc\(t\('backDesktop'\)\)\}"/);
+  assert.match(app, /function localizeWindowControls\([\s\S]*?t\('backDesktop'\)/);
 });
 
 test('los menús se cierran fuera, con Escape y al abrir una aplicación', () => {
@@ -99,6 +100,32 @@ test('el cambio de idioma refresca la ficha sin recrear el iframe y conserva est
   assert.match(app, /if \(embedded\) content\.appendChild\(embedded\)/);
   assert.match(app, /windowsState\.forEach\(win => \{\s*refreshWindow\(win\)/);
   assert.doesNotMatch(app.slice(app.indexOf('function refreshWindow'), app.indexOf('function postBridgeMessage')), /frame\.src\s*=/);
+});
+
+test('la interfaz general tiene copia centralizada para los nueve idiomas', () => {
+  const source = read('scripts/localization.js');
+  const locales = ['es-ES', 'ca-ES-valencia', 'es-LATAM', 'en-US', 'en-GB', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT'];
+  const keys = ['topBar', 'desktopMenus', 'languageLabel', 'globalLanguage', 'themeLabel', 'nightTitle', 'dawnTitle', 'localTime', 'logoAlt', 'noScript', 'closeScreenshot', 'enlargedScreenshot', 'iframeTitle', 'metaDescription'];
+  const start = source.indexOf('const globalUi =');
+  const block = source.slice(start, source.indexOf('Object.entries(cardUi)', start));
+  for (const locale of locales) {
+    const localeStart = block.indexOf(`'${locale}':`);
+    const localeEnd = block.indexOf('\n    \'', localeStart + 1);
+    const localeBlock = block.slice(localeStart, localeEnd > localeStart ? localeEnd : block.length);
+    for (const key of keys) assert.match(localeBlock, new RegExp(`\\b${key}:`), `${locale}/${key}`);
+  }
+});
+
+test('los textos dinámicos y atributos accesibles no conservan literales españoles', () => {
+  const app = read('scripts/app.js');
+  assert.doesNotMatch(app, /toast\('Ventanas centradas'\)/);
+  assert.doesNotMatch(app, /aria-label="(?:Volver al escritorio|Minimizar ventana|Cerrar ventana|Cerrar captura)"/);
+  assert.doesNotMatch(app, /frame\.title\s*=\s*'ParTriv'/);
+  assert.match(app, /document\.querySelector\('\.menubar'\)\?\.setAttribute/);
+  assert.match(app, /document\.querySelector\('\.theme-picker'\)\?\.setAttribute/);
+  assert.match(app, /document\.getElementById\('clock'\)\?\.setAttribute/);
+  assert.match(app, /localizeLightbox\(\)/);
+  assert.match(app, /const openMenuId = currentMenu/);
 });
 
 test('el juego integrado tiene una cadena flex dimensionable y observa cambios de tamaño', () => {
