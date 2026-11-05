@@ -38,8 +38,6 @@
 .app-action-link{text-decoration:none;display:inline-flex;align-items:center}
 .download-details{width:100%;font-size:10px;color:var(--fh-window-muted);line-height:1.6;margin-top:2px}
 .download-details code{word-break:break-all}
-.mobile-back{display:none;border:0;background:transparent;color:inherit;padding:6px;border-radius:8px}
-.mobile-back svg{display:block;width:20px;height:20px}
 .app-footer .primary-btn{text-decoration:none;display:inline-flex;align-items:center}
 .app-footer .primary-btn:focus-visible{outline:3px solid #243d66}
 .embedded-app-shell{margin:0;background:#10181e;border-bottom:1px solid var(--fh-line);box-sizing:border-box;min-width:0;min-height:0}
@@ -78,7 +76,6 @@
   .screenshot{flex-basis:45%}
   .party-window.party-running{height:auto}
   .party-window{inset:49px 0 0!important;border-radius:0!important;min-width:0;min-height:0;max-width:none;max-height:none;resize:none}
-  .party-window .mobile-back{display:none}
   .party-window .window-controls .maximize{display:none}
   .party-window .window-content{padding-bottom:env(safe-area-inset-bottom)}
   .party-window .embedded-app-frame{height:100%;min-height:0}
@@ -286,7 +283,6 @@ body{color:var(--fh-ink);background:var(--fh-bg)}
  .brand-home .nav-brand-logo{height:28px;width:28px}
  .menus-right{gap:8px}
  .window-titlebar{background:var(--fh-panel-raised)}
- .mobile-back{display:grid;place-items:center}
  .window{background:var(--fh-panel)}
 }
 @media(max-width:400px){

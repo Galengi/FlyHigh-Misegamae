@@ -131,11 +131,9 @@ function isParty(idOrWindow) {
 }
 
 function localizeWindowControls(win) {
-  const back = win.querySelector('.mobile-back');
   const minimize = win.querySelector('.minimize');
   const maximize = win.querySelector('.maximize');
   const close = win.querySelector('.close');
-  if (back) back.setAttribute('aria-label', t('backDesktop'));
   if (minimize) { minimize.setAttribute('aria-label', t('minimize')); minimize.querySelector('span').textContent = '−'; }
   if (maximize) { maximize.setAttribute('aria-label', t('restore')); maximize.querySelector('span').textContent = '□'; }
   if (close) { close.setAttribute('aria-label', t('close')); close.querySelector('span').textContent = '×'; }
@@ -149,15 +147,22 @@ function refreshWindow(win) {
   const activeTab = content.querySelector('[data-tab][aria-selected="true"]')?.dataset.tab || 'resumen';
   const scrollTop = content.scrollTop;
   const embedded = content.querySelector('.embedded-app-shell');
-  if (embedded) embedded.remove();
-  content.innerHTML = view.html;
-  if (embedded) content.appendChild(embedded);
+  const frame = embedded?.querySelector('.embedded-app-frame');
+  if (embedded) {
+    const replacement = document.createElement('div');
+    replacement.innerHTML = view.html;
+    [...content.children].filter(child => child !== embedded).forEach(child => child.remove());
+    while (replacement.firstElementChild) content.insertBefore(replacement.firstElementChild, embedded);
+  } else {
+    content.innerHTML = view.html;
+  }
   win.setAttribute('aria-label', view.title);
   win.querySelector('.window-title').textContent = view.title;
   selectTab(win, activeTab);
   content.scrollTop = scrollTop;
   localizeWindowControls(win);
   if (embedded) observePartyLayout(win);
+  if (frame) postLanguageToFrame(frame);
 }
 
 function postBridgeMessage(frame, data) {
@@ -300,7 +305,7 @@ function openWindow(id, { route = true } = {}) {
   el.className = `window${isParty(id) ? ' party-window' : ''}`; el.dataset.window = id;
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', view.title);
   el.style.setProperty('--w', view.width + 'px');
-  el.innerHTML = `<header class="window-titlebar" data-drag-handle><button type="button" class="mobile-back" data-window-action="hide" aria-label="${esc(t('backDesktop'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="window-title">${esc(view.title)}</span><div class="window-controls"><button type="button" class="minimize" data-window-action="minimize" aria-label="${esc(t('minimize'))}"><span>—</span></button><button type="button" class="maximize" data-window-action="maximize" aria-label="${esc(t('restore'))}"><span>□</span></button><button type="button" class="close" data-window-action="close" aria-label="${esc(t('close'))}"><span>×</span></button></div></header><div class="window-content">${view.html}</div>`;
+  el.innerHTML = `<header class="window-titlebar" data-drag-handle><span class="window-title">${esc(view.title)}</span><div class="window-controls"><button type="button" class="minimize" data-window-action="minimize" aria-label="${esc(t('minimize'))}"><span>—</span></button><button type="button" class="maximize" data-window-action="maximize" aria-label="${esc(t('restore'))}"><span>□</span></button><button type="button" class="close" data-window-action="close" aria-label="${esc(t('close'))}"><span>×</span></button></div></header><div class="window-content">${view.html}</div>`;
   windowsHost.appendChild(el); windowsState.set(id, el); bringFront(el); enableDrag(el);
   localizeWindowControls(el);
   registerEmbeddedFrame(el.querySelector('.embedded-app-frame'));
@@ -525,7 +530,6 @@ function init() {
       const win = action.closest('.window'); if (!win) return;
       const id = win.dataset.window;
       switch (action.dataset.windowAction) {
-        case 'hide':
         case 'minimize':
           win.classList.add('is-minimized');
           syncWindowClasses();

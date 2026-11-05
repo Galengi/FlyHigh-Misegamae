@@ -28,12 +28,14 @@ test('FlyHigh es el acceso al escritorio y no existe el botón de menú principa
   assert.match(app, /const brandHome = ev\.target\.closest\('#brand-name'\)/);
 });
 
-test('el regreso móvil usa un botón accesible con SVG y mantiene la minimización', () => {
+test('las ventanas no generan un botón de retroceso redundante', () => {
   const app = read('scripts/app.js');
-  assert.match(app, /class="mobile-back"[^>]*data-window-action="hide"/);
-  assert.match(app, /class="mobile-back"[\s\S]*?<svg/);
-  assert.match(app, /class="mobile-back"[\s\S]*?aria-label="\$\{esc\(t\('backDesktop'\)\)\}"/);
-  assert.match(app, /function localizeWindowControls\([\s\S]*?t\('backDesktop'\)/);
+  const css = read('assets/styles.css');
+  assert.doesNotMatch(app, /mobile-back|data-window-action="hide"/);
+  assert.doesNotMatch(css, /mobile-back/);
+  assert.match(app, /data-window-action="minimize"/);
+  assert.match(app, /data-window-action="maximize"/);
+  assert.match(app, /data-window-action="close"/);
 });
 
 test('los menús se cierran fuera, con Escape y al abrir una aplicación', () => {
@@ -97,9 +99,21 @@ test('el cambio de idioma refresca la ficha sin recrear el iframe y conserva est
   assert.match(app, /const activeTab = content\.querySelector/);
   assert.match(app, /const scrollTop = content\.scrollTop/);
   assert.match(app, /const embedded = content\.querySelector\('\.embedded-app-shell'\)/);
-  assert.match(app, /if \(embedded\) content\.appendChild\(embedded\)/);
+  assert.match(app, /content\.insertBefore\(replacement\.firstElementChild, embedded\)/);
+  assert.doesNotMatch(app.slice(app.indexOf('function refreshWindow'), app.indexOf('function postBridgeMessage')), /embedded\.remove\(\)/);
+  assert.match(app.slice(app.indexOf('function refreshWindow'), app.indexOf('function postBridgeMessage')), /postLanguageToFrame\(frame\)/);
   assert.match(app, /windowsState\.forEach\(win => \{\s*refreshWindow\(win\)/);
   assert.doesNotMatch(app.slice(app.indexOf('function refreshWindow'), app.indexOf('function postBridgeMessage')), /frame\.src\s*=/);
+});
+
+test('el cambio de idioma durante una partida conserva el iframe conectado', () => {
+  const app = read('scripts/app.js');
+  const refresh = app.slice(app.indexOf('function refreshWindow'), app.indexOf('function postBridgeMessage'));
+  assert.match(refresh, /const frame = embedded\?\.querySelector\('\.embedded-app-frame'\)/);
+  assert.match(refresh, /while \(replacement\.firstElementChild\) content\.insertBefore/);
+  assert.match(refresh, /if \(frame\) postLanguageToFrame\(frame\)/);
+  assert.doesNotMatch(refresh, /content\.innerHTML\s*=\s*view\.html[\s\S]*embedded\.remove/);
+  assert.match(app, /windowsState\.forEach\(win => \{\s*refreshWindow\(win\)/);
 });
 
 test('la interfaz general tiene copia centralizada para los nueve idiomas', () => {
@@ -146,6 +160,5 @@ if (fs.existsSync(new URL('../dist/index.html', import.meta.url))) {
       assert.equal(mojibake.test(read(file)), false, file);
     }
     assert.doesNotMatch(read('dist/index.html'), /class="brand-menu"/);
-    assert.match(read('dist/scripts/app.js'), /class="mobile-back"[\s\S]*?<svg/);
   });
 }
