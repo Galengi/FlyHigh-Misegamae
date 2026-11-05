@@ -29,11 +29,39 @@ Conecta tu repositorio en Cloudflare Pages desde el apartado **Workers & Pages**
 
 Cuando exista una APK firmada y probada, súbela a GitHub Releases o enlaza Google Play; añade la dirección real en `links` de PASfh en `catalogo.js` y cambia `status` a `published`. Incluye capturas reales en `assets/pasfh/` y configura `screenshots` en el catálogo. No se han inventado instaladores o capturas de PASfh.
 
+## Party / ParTriv
+
+Party se mantiene como una aplicación web independiente. Su ficha está en `scripts/catalogo.js` y usa el icono oficial copiado a `assets/partriv_logo_dark.png`.
+
+La ficha separa las tres acciones: jugar integrado, abrir `/apps/party/` como página de nivel superior para instalar la PWA y descargar Android. La descarga Android permanece desactivada hasta configurar una URL HTTPS real, tamaño y SHA-256 en `apps[].android`; no se inventan enlaces ni se ofrecen artefactos de desarrollo.
+
+## Distribución local integrada
+
+Con ParTriv disponible en `..\ParTriv`, ejecuta desde PowerShell:
+
+```powershell
+.\scripts\build-local.ps1
+```
+
+El script siempre recompila `ParTriv.Web` desde el código fuente actual, limpia las salidas anteriores y genera `dist/apps/party/` con las rutas de `base href`, manifiesto y service worker limitadas a `/apps/party/`. No se reutiliza una publicación Release previa.
+
+La salida `dist/` no forma parte del repositorio. En producción, el pipeline deberá construir ParTriv desde su repositorio y entregar esa carpeta como artefacto del Worker.
+
+La modalidad ZIP es avanzada y opcional. Genera todos los estáticos, no solo `index.html`, y debe ejecutarse con un servidor HTTP local:
+
+```powershell
+.\scripts\build-local.ps1 -ZipPath .local\ParTriv-Web-offline.zip
+python -m http.server 8080 --directory dist\apps\party
+```
+
+Para publicar FlyHigh y Party bajo el mismo dominio, el pipeline debe usar `dist/` como único directorio de salida y ejecutar `build-local.ps1` antes del despliegue. No hay configuración Wrangler ni credenciales de Cloudflare en este repositorio; la cuenta, proyecto Worker y reglas de assets deben aportarse antes de autorizar la publicación.
+
 ## Archivos
 
 - `index.html`: estructura HTML y selector de tema.
 - `assets/styles.css`: estilos base + los dos temas.
 - `assets/flyhigh-logo.webp`: emblema elegido de la pluma/bombilla.
+- `assets/partriv_logo_dark.png`: icono oficial de Party / ParTriv Web.
 - `assets/favicon-64.png` y `favicon-192.png`: iconos para pestañas y dispositivos.
 - `scripts/catalogo.js`: aplicaciones publicadas.
 - `scripts/app.js`: ventanas, navegación y preferencia de tema.

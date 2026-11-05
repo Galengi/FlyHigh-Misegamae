@@ -1,0 +1,10 @@
+.vs/
+.local/
+dist/
+*.user
+*.suo
+Thumbs.db
+.DS_Store
+node_modules/
+.npm-cache/
+.wrangler/
