@@ -29,14 +29,14 @@ Remove-Item -LiteralPath $stagingPath -Recurse -Force -ErrorAction SilentlyConti
 New-Item -ItemType Directory -Path $parTrivPublishPath,$pasfhPublishPath,$partyPath,$pasfhPath -Force | Out-Null
 
 try {
-  Copy-Item -LiteralPath (Join-Path $flyHighRoot 'index.html') -Destination $stagingPath
-  Copy-Item -LiteralPath (Join-Path $flyHighRoot 'assets') -Destination $stagingPath -Recurse
-  Copy-Item -LiteralPath (Join-Path $flyHighRoot 'scripts') -Destination $stagingPath -Recurse
+Copy-Item -LiteralPath (Join-Path $flyHighRoot 'index.html') -Destination $stagingPath
+Copy-Item -LiteralPath (Join-Path $flyHighRoot 'assets') -Destination $stagingPath -Recurse
+Copy-Item -LiteralPath (Join-Path $flyHighRoot 'scripts') -Destination $stagingPath -Recurse
 
   foreach ($project in @($parTrivProject, $pasfhProject)) {
-    dotnet clean $project --configuration Release --nologo
+dotnet clean $project --configuration Release --nologo
     if ($LASTEXITCODE -ne 0) { throw "dotnet clean falló: $project" }
-    dotnet restore $project --nologo
+dotnet restore $project --nologo
     if ($LASTEXITCODE -ne 0) { throw "dotnet restore falló: $project" }
   }
   dotnet publish $parTrivProject --configuration Release --output $parTrivPublishPath --no-restore --nologo
@@ -49,7 +49,7 @@ try {
   Copy-Item -Path (Join-Path $publishedPartyRoot '*') -Destination $partyPath -Recurse -Force
   Copy-Item -Path (Join-Path $publishedPasfhRoot '*') -Destination $pasfhPath -Recurse -Force
 
-  $partyIndex = Join-Path $partyPath 'index.html'
+$partyIndex = Join-Path $partyPath 'index.html'
   $partyText = Get-Content -LiteralPath $partyIndex -Raw
   $partyText = $partyText -replace '<base href="/"\s*/>', '<base href="/apps/party/" />'
   if ($partyText -notmatch '<base href="/apps/party/"\s*/>') { throw 'Base href inválido para Party.' }
@@ -71,9 +71,9 @@ try {
   $pasfhManifestText = $pasfhManifestText -replace '"scope"\s*:\s*"\.\/?"', '"scope": "/apps/pasfh/"'
   Set-Content -LiteralPath $pasfhManifest -Value $pasfhManifestText -Encoding utf8
 
-  foreach ($required in @('index.html','manifest.webmanifest','service-worker.js','service-worker-assets.js','game_items.json','_framework')) {
-    if (-not (Test-Path (Join-Path $partyPath $required))) { throw "Falta el recurso Party: $required" }
-  }
+foreach ($required in @('index.html','manifest.webmanifest','service-worker.js','service-worker-assets.js','game_items.json','_framework')) {
+  if (-not (Test-Path (Join-Path $partyPath $required))) { throw "Falta el recurso Party: $required" }
+}
   foreach ($required in @('index.html','manifest.webmanifest','service-worker.js','service-worker-assets.js','_framework')) {
     if (-not (Test-Path (Join-Path $pasfhPath $required))) { throw "Falta el recurso PASfh: $required" }
   }
@@ -84,17 +84,18 @@ try {
     if ($worker -match 'scope\s*=\s*["'']\/["'']|importScripts\(["'']/') { throw "Service worker fuera de ámbito: $appPath" }
   }
 
-  if (-not [string]::IsNullOrWhiteSpace($ZipPath)) {
-    $zipTarget = [IO.Path]::GetFullPath($ZipPath)
-    $zipParent = Split-Path -Parent $zipTarget
-    if ($zipParent) { New-Item -ItemType Directory -Path $zipParent -Force | Out-Null }
-    Compress-Archive -Path (Join-Path $stagingPath '*') -DestinationPath $zipTarget -CompressionLevel Optimal -Force
-  }
+if (-not [string]::IsNullOrWhiteSpace($ZipPath)) {
+  $zipTarget = [IO.Path]::GetFullPath($ZipPath)
+  $zipParent = Split-Path -Parent $zipTarget
+  if ($zipParent) { New-Item -ItemType Directory -Path $zipParent -Force | Out-Null }
+  Compress-Archive -Path (Join-Path $stagingPath '*') -DestinationPath $zipTarget -CompressionLevel Optimal -Force
+  Write-Output "ZIP offline avanzado creado en: $zipTarget"
+}
 
-  Remove-Item -LiteralPath $OutputPath -Recurse -Force -ErrorAction SilentlyContinue
-  Move-Item -LiteralPath $stagingPath -Destination $OutputPath
+Remove-Item -LiteralPath $OutputPath -Recurse -Force -ErrorAction SilentlyContinue
+Move-Item -LiteralPath $stagingPath -Destination $OutputPath
   Write-Output "Distribución local creada en: $OutputPath"
-  Write-Output "ParTriv integrado en: $(Join-Path $OutputPath 'apps\party')"
+Write-Output "ParTriv integrado en: $(Join-Path $OutputPath 'apps\party')"
   Write-Output "PASfh integrado en: $(Join-Path $OutputPath 'apps\pasfh')"
 }
 catch {

@@ -1,0 +1,10 @@
+{
+  "name": "flyhigh-misegamae-preview",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/flyhigh-ui.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.158.0"
+  }
+}
