@@ -1,0 +1,219 @@
+name: FlyHigh CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      partriv_ref:
+        description: 'ParTriv commit, tag or release ref'
+        required: true
+        default: 'cc0c2435fa2c7b64888ee696b6fe42269478a611'
+        type: string
+      pasfh_ref:
+        description: 'PASfh Web approved commit, tag or release ref'
+        required: true
+        default: 'd63f67433d91590ee16fdc35a4217c95c62c7cdc'
+        type: string
+      deploy:
+        description: 'Deploy this manual run to the production Worker'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flyhigh-misegamae-worker
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: 'true'
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout FlyHigh triggering commit
+        uses: actions/checkout@v4
+        with:
+          path: flyhigh
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Checkout pinned ParTriv
+        uses: actions/checkout@v4
+        with:
+          repository: Galengi/ParTriv
+          token: ${{ secrets.PARTRIV_REPO_READ_TOKEN }}
+          path: partriv
+          ref: ${{ inputs.partriv_ref || 'cc0c2435fa2c7b64888ee696b6fe42269478a611' }}
+          fetch-depth: 1
+
+      - name: Verify ParTriv reference
+        shell: bash
+        working-directory: partriv
+        env:
+          EXPECTED_REF: ${{ inputs.partriv_ref || 'cc0c2435fa2c7b64888ee696b6fe42269478a611' }}
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          expected="$(git rev-parse "${EXPECTED_REF}^{commit}")"
+          test "$actual" = "$expected"
+          printf 'ParTriv pinned commit: %s\n' "$actual"
+
+      - name: Checkout pinned PASfh
+        uses: actions/checkout@v4
+        with:
+          repository: Galengi/PASfh
+          token: ${{ secrets.PASFH_REPO_READ_TOKEN }}
+          path: pasfh
+          ref: ${{ inputs.pasfh_ref || 'd63f67433d91590ee16fdc35a4217c95c62c7cdc' }}
+          fetch-depth: 1
+
+      - name: Verify PASfh reference
+        shell: bash
+        working-directory: pasfh
+        env:
+          EXPECTED_REF: ${{ inputs.pasfh_ref || 'd63f67433d91590ee16fdc35a4217c95c62c7cdc' }}
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          expected="$(git rev-parse "${EXPECTED_REF}^{commit}")"
+          test "$actual" = "$expected"
+          printf 'PASfh pinned commit: %s\n' "$actual"
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify PowerShell Core
+        shell: bash
+        run: pwsh --version
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: flyhigh/package-lock.json
+
+      - name: Install FlyHigh dependencies
+        working-directory: flyhigh
+        run: npm ci
+
+      - name: Test ParTriv Core
+        run: dotnet test partriv/tests/ParTriv.Core.Tests/ParTriv.Core.Tests.csproj --configuration Release --nologo
+
+      - name: Test ParTriv Web
+        run: dotnet test partriv/tests/ParTriv.Web.Tests/ParTriv.Web.Tests.csproj --configuration Release --nologo
+
+      - name: Test PASfh Core
+        run: dotnet test pasfh/tests/PASfh.Core.Tests/PASfh.Core.Tests.csproj --configuration Release --nologo
+
+      - name: Test PASfh Web
+        run: dotnet test pasfh/tests/PASfh.Web.Tests/PASfh.Web.Tests.csproj --configuration Release --nologo
+
+      - name: Test FlyHigh JavaScript
+        working-directory: flyhigh
+        run: npm test
+
+      - name: Build integrated distribution
+        shell: pwsh
+        run: ./flyhigh/scripts/build-local.ps1 -ParTrivPath ./partriv -PASfhPath ./pasfh -OutputPath ./flyhigh/dist
+
+      - name: Validate distribution
+        shell: bash
+        working-directory: flyhigh
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/apps/party/index.html
+          test -f dist/apps/party/manifest.webmanifest
+          test -f dist/apps/party/service-worker.js
+          test -f dist/apps/party/service-worker-assets.js
+          test -f dist/apps/party/game_items.json
+          test -d dist/apps/party/_framework
+          test -f dist/apps/pasfh/index.html
+          test -f dist/apps/pasfh/manifest.webmanifest
+          test -f dist/apps/pasfh/service-worker.js
+          test -f dist/apps/pasfh/service-worker-assets.js
+          test -d dist/apps/pasfh/_framework
+          grep -q '<base href="/apps/party/"' dist/apps/party/index.html
+          grep -q '"start_url": "/apps/party/"' dist/apps/party/manifest.webmanifest
+          grep -q '"scope": "/apps/party/"' dist/apps/party/manifest.webmanifest
+          grep -q '<base href="/apps/pasfh/"' dist/apps/pasfh/index.html
+          grep -q '"start_url": "/apps/pasfh/"' dist/apps/pasfh/manifest.webmanifest
+          grep -q '"scope": "/apps/pasfh/"' dist/apps/pasfh/manifest.webmanifest
+          if grep -Eq 'scope[[:space:]]*=[[:space:]]*"/"' dist/apps/party/service-worker.js; then exit 1; fi
+          if grep -Eq 'scope[[:space:]]*=[[:space:]]*"/"' dist/apps/pasfh/service-worker.js; then exit 1; fi
+          if grep -q '/apps/pasfh/' dist/apps/party/service-worker-assets.js; then exit 1; fi
+          if grep -q '/apps/party/' dist/apps/pasfh/service-worker-assets.js; then exit 1; fi
+          if find dist -type f \( -iname '*.keystore' -o -iname '*.jks' -o -iname '*.p12' -o -iname '*.pfx' -o -iname '*.rar' -o -iname '*.zip' -o -iname 'PWD.txt' \) -print -quit | grep -q .; then exit 1; fi
+          max_bytes="$(find dist -type f -printf '%s\n' | sort -nr | head -n 1)"
+          test "${max_bytes:-0}" -lt 26214400
+
+      - name: Upload validated distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: flyhigh-dist-${{ github.sha }}
+          path: flyhigh/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy production Worker
+    needs: build-and-test
+    if: >-
+      needs.build-and-test.result == 'success' &&
+      (github.event_name == 'push' ||
+       (github.event_name == 'workflow_dispatch' && inputs.deploy == true))
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout FlyHigh triggering commit
+        uses: actions/checkout@v4
+        with:
+          path: flyhigh
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Download validated distribution
+        uses: actions/download-artifact@v4
+        with:
+          name: flyhigh-dist-${{ github.sha }}
+          path: flyhigh/dist
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: flyhigh/package-lock.json
+
+      - name: Install Wrangler from lockfile
+        working-directory: flyhigh
+        run: npm ci
+
+      - name: Check deployment secrets are present
+        shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$CF_API_TOKEN"
+          test -n "$CF_ACCOUNT_ID"
+
+      - name: Deploy Worker
+        working-directory: flyhigh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.jsonc

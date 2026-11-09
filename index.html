@@ -9,7 +9,9 @@
   <link rel="apple-touch-icon" href="./assets/favicon-192.png" />
   <link rel="stylesheet" href="./assets/styles.css" />
   <title>Fly High · Aplicaciones personales</title>
+  <script src="./scripts/catalogo-localizacion.js" defer></script>
   <script src="./scripts/catalogo.js" defer></script>
+  <script src="./scripts/localization.js" defer></script>
   <script src="./scripts/app.js" defer></script>
 </head>
 <body>
@@ -17,10 +19,10 @@
 
   <header class="menubar" aria-label="Barra superior">
     <div class="menus-left">
-      <button class="brand-menu" type="button" data-menu="inicio" aria-label="Menú principal" aria-expanded="false" title="Menú principal">
+      <button class="brand-home" id="brand-name" type="button" aria-label="Volver al escritorio" title="Volver al escritorio">
         <img class="nav-brand-logo" src="./assets/flyhigh-logo.webp" alt="" />
+        <span>Fly High</span>
       </button>
-      <span class="brand-name" id="brand-name">Fly High</span>
       <nav class="desktop-menus" aria-label="Menús del escritorio">
         <button class="menubar-item" type="button" data-menu="archivo" aria-expanded="false">Archivo</button>
         <button class="menubar-item" type="button" data-menu="ver" aria-expanded="false">Ver</button>
@@ -29,6 +31,8 @@
       </nav>
     </div>
     <div class="menus-right">
+      <label class="language-picker-label" for="language-picker">Idioma</label>
+      <select id="language-picker" class="language-picker" aria-label="Idioma global"></select>
       <div class="theme-picker" role="group" aria-label="Tema del portfolio">
         <button class="theme-option" type="button" data-theme-choice="night" aria-pressed="true" title="Azul Noche Elegante">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15.1Z"/></svg><span>Noche</span>
