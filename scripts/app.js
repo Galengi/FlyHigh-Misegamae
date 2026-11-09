@@ -74,40 +74,40 @@ function localizedApp(app) {
 function renderApp(app) {
   const copy = localizedApp(app);
   const labels = key => t(key);
+  const capabilityLabels = { pwa: labels('capabilityPwa'), offline: labels('capabilityOffline') };
+  const capabilities = (app.capabilities || []).map(key => capabilityLabels[key]).filter(Boolean);
   const features = (copy.features || []).map(feature => `<article class="feature-card"><span class="feature-glyph" aria-hidden="true">${esc(feature.icon || '✳')}</span><strong>${esc(feature.title)}</strong><p>${esc(feature.description)}</p></article>`).join('');
+  const highlights = (copy.highlights || []).map(item => `<article class="highlight-item"><strong>${esc(item.title)}</strong><p>${esc(item.description)}</p></article>`).join('');
   const screenshots = (app.screenshots || []).map(img => {
     const src = safeURL(img.src);
     return src ? `<figure class="screenshot"><img src="${esc(src)}" alt="${esc(img.alt || labels('screenshotAlt'))}" loading="lazy" data-screenshot/><figcaption>${esc(img.alt || '')}</figcaption></figure>` : '';
   }).filter(Boolean).join('');
-  const links = (app.links || []).map(l => {
-    const url = safeURL(l.url);
-    return url ? `<a class="primary-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(l.label || t('open'))} ↗</a>` : '';
-  }).filter(Boolean).join('');
+  const externalPath = safeAppPath(app.externalPath || app.embedPath);
+  const externalAction = externalPath ? `<a class="secondary-btn app-action-link" href="${esc(externalPath)}" target="_blank" rel="noopener noreferrer">${esc(copy.actions.external)} ↗</a>` : '';
   const embeddedPath = safeAppPath(app.embedPath);
-  const actions = app.actions || {};
-  const playAction = embeddedPath ? `<button class="primary-btn" type="button" data-start-embedded="${esc(embeddedPath)}">${esc(copy.actions.play || t('open'))}</button>` : '';
-  const installPath = safeAppPath(actions.install?.url);
-  const installAction = installPath ? `<a class="secondary-btn app-action-link" href="${esc(installPath)}" target="_blank" rel="noopener noreferrer">${esc(copy.actions.install || t('open'))} ↗</a>` : '';
-  const androidUrl = safeURL(actions.android?.url || app.android?.url);
-  const androidAction = androidUrl ? `<a class="secondary-btn app-action-link" href="${esc(androidUrl)}" download>${esc(copy.actions.download)}</a>` : `<span class="disabled-pill" aria-disabled="true">⌛ ${esc(copy.actions.pendingApk || labels('downloadUnavailable'))}</span>`;
-  const actionRow = `<div class="app-actions">${playAction}${installAction}${androidAction}</div>`;
-  const footerAction = actionRow || links || `<span class="disabled-pill">⌛ ${esc(labels('downloadUnavailable'))}</span>`;
+  const primaryAction = embeddedPath ? `<button class="primary-btn" type="button" data-start-embedded="${esc(embeddedPath)}">${esc(copy.actions.primary)}</button>` : '';
+  const androidUrl = safeURL(app.android?.url);
+  const androidAction = androidUrl ? `<a class="secondary-btn app-action-link" href="${esc(androidUrl)}" download>${esc(copy.actions.androidDownload || labels('downloadAndroid'))}</a>` : `<span class="disabled-pill" aria-disabled="true">${esc(copy.actions.androidPending || labels('androidPending'))}</span>`;
+  const actionRow = `<div class="app-actions">${primaryAction}${externalAction}${androidAction}</div>`;
   const published = app.status === 'published';
   const status = published ? t('published') : t('development');
   const galleryCopy = copy.gallery || { title: t('pendingCaptures'), description: t('addCaptures'), files: '' };
   const emptyGallery = `<div class="empty-gallery"><span class="empty-gallery-icon" aria-hidden="true">▧</span><h4>${esc(galleryCopy.title)}</h4><p>${esc(galleryCopy.description)}</p>${galleryCopy.files ? `<div class="small-details"><div><strong>${esc(labels('files'))}:</strong> ${esc(galleryCopy.files)}</div></div>` : ''}</div>`;
-  const partyDetails = app.id === 'partriv' ? `<div class="party-details">${(copy.features || []).map(feature => `<p><strong>${esc(feature.title)}:</strong> ${esc(feature.description)}</p>`).join('')}</div>` : '';
-  return `<div class="app-hero"><div class="hero-app-icon">${appIcon(app)}</div><div><div class="app-category">${esc(labels('appLabel'))} · ${esc(copy.category || labels('software'))}</div><h2>${esc(app.name)}</h2><p>${esc(copy.summary)}</p><div class="status-row"><span class="status-pill ${published ? 'status-published' : ''}">● ${esc(status)}</span>${(copy.platform || []).map(platform => `<span class="platform-pill">${esc(platform)}</span>`).join('')}</div></div></div>
-    <div class="app-nav" role="tablist" aria-label="${esc(`${labels('appLabel')}: ${app.name}`)}">
+  const badges = [
+    `<span class="status-pill ${published ? 'status-published' : ''}">● ${esc(status)}</span>`,
+    ...(copy.platforms || []).map(platform => `<span class="platform-pill">${esc(platform)}</span>`),
+    ...capabilities.map(capability => `<span class="capability-pill">${esc(capability)}</span>`)
+  ].join('');
+  return `<div class="app-hero"><div class="hero-app-icon">${appIcon(app)}</div><div><div class="app-category">${esc(copy.type)} · ${esc(copy.category)}</div><h2>${esc(app.name)}</h2><p>${esc(copy.summary)}</p><div class="status-row">${badges}</div></div></div>
+    <div class="app-nav" role="tablist" aria-label="${esc(`${copy.type}: ${app.name}`)}">
       <button class="app-tab" type="button" role="tab" aria-selected="true" data-tab="resumen">${esc(t('description'))}</button>
       <button class="app-tab" type="button" role="tab" aria-selected="false" data-tab="capturas" tabindex="-1">${esc(t('screenshots'))}</button>
       <button class="app-tab" type="button" role="tab" aria-selected="false" data-tab="publicacion" tabindex="-1">${esc(t('publication'))}</button>
     </div>
-    <section class="tab-pane" data-pane="resumen" role="tabpanel"><h3 class="pane-heading">${esc(app.name)} · ${esc(copy.category || labels('software'))}</h3><p class="body-copy">${esc(copy.description)}</p>${partyDetails}<div class="feature-grid">${features || `<p>${esc(labels('noFeatures'))}</p>`}</div><div class="app-footer">${footerAction}</div>${app.android?.sizeBytes ? `<div class="download-details"><strong>${esc(labels('apk'))} ${esc(app.android.version || '')}</strong> · ${Number(app.android.sizeBytes).toLocaleString(globalLanguage)} bytes · SHA-256 <code>${esc(app.android.sha256 || labels('pending'))}</code></div>` : ''}${copy.notice ? `<p class="demo-note">${esc(copy.notice)}</p>` : ''}</section>
+    <section class="tab-pane" data-pane="resumen" role="tabpanel"><h3 class="pane-heading">${esc(t('overview'))}</h3><p class="body-copy">${esc(copy.description)}</p>${highlights ? `<div class="highlights-block"><h4>${esc(t('highlights'))}</h4><div class="highlights-grid">${highlights}</div></div>` : ''}<div class="feature-grid">${features || `<p>${esc(labels('noFeatures'))}</p>`}</div><div class="app-footer">${actionRow}</div>${copy.notice ? `<p class="demo-note app-notice">${esc(copy.notice)}</p>` : ''}</section>
     <section class="tab-pane" data-pane="capturas" role="tabpanel" hidden><h3 class="pane-heading">${esc(galleryCopy.title || t('gallery', app.name))}</h3>${screenshots ? `<div class="screenshot-grid">${screenshots}</div>` : emptyGallery}</section>
-    <section class="tab-pane" data-pane="publicacion" role="tabpanel" hidden><h3 class="pane-heading">${esc(t('appStatus'))}</h3><p class="body-copy">${esc(published ? labels('statusAvailable') : labels('statusPending'))}</p><div class="small-details"><div><strong>${esc(labels('state'))}:</strong> ${esc(status)}</div><div><strong>${esc(t('platform'))}:</strong> ${esc((copy.platform || []).join(', ') || t('pending'))}</div><div><strong>${esc(t('technology'))}:</strong> ${esc(copy.technology || t('pending'))}</div><div><strong>${esc(t('version'))}:</strong> ${esc(app.version || t('pending'))}</div><div><strong>${esc(t('captures'))}:</strong> ${esc((app.screenshots || []).length ? labels('added') : labels('pendingToAdd'))}</div></div><div class="app-footer">${footerAction}</div></section>`;
+    <section class="tab-pane" data-pane="publicacion" role="tabpanel" hidden><h3 class="pane-heading">${esc(t('appStatus'))}</h3><p class="body-copy">${esc(published ? labels('statusAvailable') : labels('statusPending'))}</p><div class="publication-grid"><div><strong>${esc(labels('state'))}</strong><span>${esc(status)}</span></div><div><strong>${esc(t('platform'))}</strong><span>${esc((copy.platforms || []).join(', ') || t('pending'))}</span></div><div><strong>${esc(t('capabilities'))}</strong><span>${esc(capabilities.join(', ') || labels('notVerified'))}</span></div><div><strong>${esc(t('webVersion'))}</strong><span>${esc(copy.availability?.web || t('pending'))}</span></div><div><strong>${esc(t('pwa'))}</strong><span>${esc(copy.availability?.pwa || labels('notVerified'))}</span></div><div><strong>${esc(t('android'))}</strong><span>${esc(copy.availability?.android || copy.actions.androidPending || labels('androidPending'))}</span></div></div></section>`;
 }
-
 function renderAbout() {
   const copy = studio.translations?.[globalLanguage];
   if (!copy) throw new Error(`Missing ${globalLanguage} studio translation`);

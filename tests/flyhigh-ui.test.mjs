@@ -5,7 +5,7 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const read = relative => fs.readFileSync(new URL(relative, root), 'utf8');
 const sourceFiles = ['scripts/localization.js', 'scripts/catalogo-localizacion.js', 'scripts/catalogo.js', 'scripts/app.js', 'index.html', 'scripts/build-local.ps1'];
-const mojibake = /(?:Ã.|Â.|â.|�)/u;
+const mojibake = /(?:Ã[\x80-\xBF]|Â[\x80-\xBF]|â(?:€|™|œ|ž|†|‡|…|—|“|”|‘|’)|ï¿½|�)/u;
 
 test('las cadenas visibles no contienen corrupción UTF-8', () => {
   for (const file of sourceFiles) assert.equal(mojibake.test(read(file)), false, file);
@@ -163,6 +163,61 @@ test('el juego integrado tiene una cadena flex dimensionable y observa cambios d
   assert.match(css, /\.party-window\.party-running \.window-content\{display:flex;flex:1 1 auto/);
   assert.match(css, /\.party-window\.party-running \.embedded-app-shell\{display:flex;flex:1 1 auto;width:100%;height:100%/);
   assert.match(css, /\.embedded-app-frame\{display:block;width:100%;height:100%;min-width:0;min-height:0/);
+});
+
+test('el catálogo usa metadatos comunes para PASfh y ParTriv', () => {
+  const catalog = read('scripts/catalogo.js');
+  assert.match(catalog, /typeId: 'application'/);
+  assert.match(catalog, /id: 'pasfh'[\s\S]*categoryId: 'health'[\s\S]*status: 'development'/);
+  assert.match(catalog, /id: 'partriv'[\s\S]*categoryId: 'games'[\s\S]*status: 'development'/);
+  assert.match(catalog, /externalPath: '\.\/apps\/pasfh\/'/);
+  assert.match(catalog, /externalPath: '\.\/apps\/party\/'/);
+  assert.match(catalog, /capabilities: \['pwa', 'offline'\]/);
+});
+
+test('las dos fichas comparten acciones, publicación y aviso', () => {
+  const app = read('scripts/app.js');
+  const localized = read('scripts/catalogo-localizacion.js');
+  assert.match(app, /target="_blank" rel="noopener noreferrer"/);
+  assert.match(app, /data-start-embedded/);
+  assert.match(app, /publication-grid/);
+  assert.match(app, /capabilityLabels/);
+  assert.doesNotMatch(app, /actions\.install/);
+  assert.doesNotMatch(app, /Instalar versión web/);
+  assert.match(localized, /PASfh proporciona información general/);
+  assert.match(localized, /APK Android pendiente de publicación/);
+});
+
+test('las capacidades y el APK pendiente no prometen disponibilidad inexistente', () => {
+  const catalog = read('scripts/catalogo.js');
+  const app = read('scripts/app.js');
+  assert.match(catalog, /pasfh[\s\S]*capabilities: \[\]/);
+  assert.match(catalog, /android: \{ status: 'pending'[\s\S]*url: '' \}/);
+  assert.match(app, /disabled-pill/);
+  assert.match(app, /safeURL\(app\.android\?\.url\)/);
+});
+
+test('la ficha común está preparada para texto largo en móvil', () => {
+  const css = read('assets/styles.css');
+  assert.match(css, /\.highlights-grid\{display:grid;grid-template-columns:repeat\(3,1fr\)/);
+  assert.match(css, /@media\(max-width:760px\)\{\.highlights-grid\{grid-template-columns:1fr\}/);
+  assert.match(css, /\.app-actions>\*\{max-width:100%;white-space:normal/);
+});
+
+test('las etiquetas de capacidades están localizadas en los nueve idiomas', () => {
+  const source = read('scripts/localization.js');
+  for (const key of ['capabilityPwa', 'capabilityOffline']) assert.equal((source.match(new RegExp(`\\b${key}:`, 'g')) || []).length, 9, key);
+});
+
+test('el estado PWA no reutiliza el literal español en otros idiomas', () => {
+  const source = read('scripts/catalogo-localizacion.js');
+  const start = source.indexOf('window.FLYHIGH_APP_TRANSLATIONS');
+  for (const locale of ['ca-ES-valencia', 'en-US', 'en-GB', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT']) {
+    const from = source.indexOf(`'${locale}':`, start);
+    const next = source.indexOf("\n    '", from + 1);
+    const block = source.slice(from, next > from ? next : source.length);
+    assert.doesNotMatch(block, /Instalación PWA pendiente de verificación/, locale);
+  }
 });
 
 if (fs.existsSync(new URL('../dist/index.html', import.meta.url))) {
